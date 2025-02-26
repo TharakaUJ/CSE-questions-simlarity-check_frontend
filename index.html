@@ -104,12 +104,12 @@
                 });
                 const data = await response.json();
 
-                if (data.similarities === 0) {
+                if (data.similarity_count === 0) {
                     resultDiv.textContent = 'No similarities found.';
                     resultDiv.className = 'result green';
                     addQuestion(question);
                 } else {
-                    resultDiv.textContent = `Found ${data.similarities} similarities.`;
+                    resultDiv.textContent = `Found ${data.similarity_count} similarities.`;
                     resultDiv.className = 'result red';
                 }
             } catch (error) {
