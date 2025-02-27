@@ -87,6 +87,16 @@
             color: #cc0000;
             display: block;
         }
+
+        .add-anyway {
+            display: none;
+            margin-top: 10px;
+            background-color: #ff9800;
+        }
+
+        .add-anyway:hover {
+            background-color: #e68900;
+        }
     </style>
 </head>
 
@@ -96,17 +106,20 @@
         <textarea id="questionInput" placeholder="Enter your question here"></textarea>
         <button onclick="checkSimilarity()">Check Similarity</button>
         <div id="result" class="result"></div>
+        <button id="addAnywayBtn" class="add-anyway" onclick="addAnyway()">Add Anyway</button>
     </div>
 
     <script>
         async function checkSimilarity() {
             const question = document.getElementById('questionInput').value;
             const resultDiv = document.getElementById('result');
+            const addAnywayBtn = document.getElementById('addAnywayBtn');
 
             if (!question) {
                 resultDiv.textContent = 'Please enter a question.';
                 resultDiv.className = 'result';
                 resultDiv.style.display = 'block';
+                addAnywayBtn.style.display = 'none';
                 return;
             }
 
@@ -119,27 +132,50 @@
                 const data = await response.json();
 
                 if (data.similarity_count === 0) {
-                    resultDiv.textContent = 'No similarities found.';
+                    resultDiv.textContent = 'No similarities found. Adding question...';
                     resultDiv.className = 'result green';
-                    addQuestion(question);
+                    await addQuestion(question);
+                    addAnywayBtn.style.display = 'none';
                 } else {
                     resultDiv.textContent = `Found ${data.similarity_count} similarities.`;
                     resultDiv.className = 'result red';
+                    addAnywayBtn.style.display = 'block';
                 }
                 resultDiv.style.display = 'block';
             } catch (error) {
                 resultDiv.textContent = 'Error checking similarities.';
                 resultDiv.className = 'result';
                 resultDiv.style.display = 'block';
+                addAnywayBtn.style.display = 'none';
             }
         }
 
         async function addQuestion(question) {
-            await fetch('https://questions.cse.jaindu.me/questions/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: question })
-            });
+            try {
+                const response = await fetch('https://questions.cse.jaindu.me/questions/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: question })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.detail?.[0]?.msg || 'Failed to add question');
+                }
+                
+                document.getElementById('result').textContent = `Success: Question added!\n(ID: ${data.id})`;
+                document.getElementById('result').className = 'result green';
+                document.getElementById('addAnywayBtn').style.display = 'none';
+            } catch (error) {
+                document.getElementById('result').textContent = `Error: ${error.message}`;
+                document.getElementById('result').className = 'result red';
+            }
+        }
+
+        function addAnyway() {
+            const question = document.getElementById('questionInput').value;
+            addQuestion(question);
         }
     </script>
 </body>
